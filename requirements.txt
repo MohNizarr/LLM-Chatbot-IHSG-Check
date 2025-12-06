@@ -1,7 +1,7 @@
-streamlit
+streamlit>=1.36.0
 yfinance
 pandas
-langchain
-langchain-google-genai
-langchain-core         
-langchain-community    
+langchain==0.2.11
+langchain-core==0.2.21 # Pastikan ini sinkron dengan langchain
+langchain-community==0.2.10 # Pastikan ini sinkron
+langchain-google-genai==0.0.18 # Versi terbaru saat ini
