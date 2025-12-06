@@ -1,6 +1,6 @@
 ## LLM Chatbot IHSG Check
 
-![chatbot]{chatbott.png}
+![chatbot](chatbott.png)
 
 This project implements an **interactive chatbot** powered by a **Large Language Model (LLM)** to provide information, checks, and analysis related to the **IHSG** (*Indeks Harga Saham Gabungan*, or Jakarta Composite Index) and Indonesian stock market data. The chatbot is hosted on a web interface built with Streamlit.
 
