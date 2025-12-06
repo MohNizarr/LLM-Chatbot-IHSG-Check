@@ -2,23 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
-
-# Provider (Integrasi dengan Gemini)
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-# CORE COMPONENTS
-# ChatPromptTemplate & MessagesPlaceholder
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder 
-# HumanMessage, AIMessage, SystemMessage
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-
-# COMPONENTS KOMUNITAS (Diperbaiki ke langchain_community)
-# ConversationBufferWindowMemory (Ini adalah letak yang benar jika tidak di paket utama)
-from langchain_community.chat_models import ConversationBufferWindowMemory # <-- KOREKSI UTAMA UNTUK MEMORY
-
-# Components yang masih berada di package utama 'langchain'
-from langchain.chains import LLMChain 
-# Perhatikan: Karena memory sudah diimpor dari community, kita hapus impor lama dari langchain.memory
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.chains import LLMChain
 
 # ========== KONFIGURASI ==========
 st.set_page_config(
@@ -29,7 +17,7 @@ st.set_page_config(
 
 # Load API Key dari secrets
 try:
-    GOOGLE_API_KEY = st.secrets["GEMINI_API_KEY"]
+    GOOGLE_API_KEY =  st.secrets["GEMINI_API_KEY"]
 except Exception as e:
     st.error("⚠️ API Key Gemini tidak ditemukan. Pastikan GEMINI_API_KEY sudah diset di st.secrets.")
     st.stop()
@@ -64,7 +52,7 @@ def init_llm():
 llm = init_llm()
 
 # ========== FUNGSI CACHING DATA ==========
-@st.cache_data(ttl=300) # Cache 5 menit
+@st.cache_data(ttl=300)  # Cache 5 menit
 def fetch_ihsg_data():
     """Mengambil data IHSG terkini dari Yahoo Finance"""
     try:
@@ -111,7 +99,7 @@ def fetch_ihsg_data():
     except Exception as e:
         return {"error": str(e)}
 
-@st.cache_data(ttl=300) # Cache 5 menit
+@st.cache_data(ttl=300)  # Cache 5 menit
 def fetch_ihsg_weekly_data():
     """Mengambil data IHSG seminggu terakhir dari Yahoo Finance"""
     try:
@@ -284,7 +272,7 @@ def get_ihsg_data_and_format():
         error_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=SYSTEM_INSTRUCTION),
             HumanMessage(content=f"""Data IHSG dari sumber eksternal gagal diambil dengan error: {error_msg}. 
-            
+        
 Berikan respons yang sopan kepada pengguna bahwa data pasar real-time sedang tidak tersedia dan sarankan untuk:
 1. Coba beberapa saat lagi
 2. Cek langsung di website BEI atau aplikasi trading
@@ -467,7 +455,7 @@ with st.sidebar:
     **Indeks AI** adalah chatbot AI yang dirancang untuk membantu investor pemula memahami pasar modal Indonesia dengan lebih baik.
     
     **Fitur:**
-    - 🔴 Informasi Data IHSG  
+    - 🔴 Informasi Data IHSG 
     - 📖 Edukasi Investasi
     - 🤖 Powered by Gemini 2.5 Flash
     - 🔗 Arsitektur LangChain
@@ -488,7 +476,8 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("""
-    **Disclaimer:** Informasi yang diberikan bersifat edukatif dan bukan rekomendasi investasi. Selalu lakukan riset mandiri dan konsultasi dengan profesional berlisensi.
+    **Disclaimer:**  
+    Informasi yang diberikan bersifat edukatif dan bukan rekomendasi investasi. Selalu lakukan riset mandiri dan konsultasi dengan profesional berlisensi.
     """)
     
     st.divider()
@@ -522,10 +511,6 @@ if prompt := st.chat_input("Tanyakan tentang IHSG, investasi, atau pasar modal I
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # Inisialisasi variabel respons utama
-        response = ""
-        result = None
-        
         with st.spinner("🤔 Menganalisis dengan Gemini 2.5 Flash..."):
             if is_ihsg_weekly_request(prompt):
                 result = get_ihsg_weekly_data_and_format()
@@ -534,16 +519,12 @@ if prompt := st.chat_input("Tanyakan tentang IHSG, investasi, atau pasar modal I
                     message_placeholder.markdown(response)
                     st.dataframe(df, use_container_width=True, hide_index=True)
                     
-                    # Ambil data lagi (untuk line_chart, walaupun sudah ada di 'result' untuk memastikan pemrosesan data)
                     weekly_data = fetch_ihsg_weekly_data()
-                    if weekly_data and not isinstance(weekly_data, dict):
-                        # Filter data untuk memastikan semua memiliki kunci 'date' dan 'close'
-                        chart_data = {d['date']: d['close'] for d in weekly_data if 'date' in d and 'close' in d}
-                        if chart_data:
-                            st.line_chart(
-                                data=chart_data,
-                                use_container_width=True
-                            )
+                    if weekly_data:
+                        st.line_chart(
+                            data={d['date']: d['close'] for d in weekly_data},
+                            use_container_width=True
+                        )
                 else:
                     response = result
                     message_placeholder.markdown(response)
@@ -555,17 +536,10 @@ if prompt := st.chat_input("Tanyakan tentang IHSG, investasi, atau pasar modal I
                 response = get_llm_response(prompt, st.session_state.messages)
                 message_placeholder.markdown(response)
     
-    # Logic untuk menyimpan pesan ke session state:
-    final_response_content = None
-    if result is not None and isinstance(result, tuple):
-        # Weekly: ambil komponen teks (index 0)
-        final_response_content = result[0]
-    elif response:
-        # Daily atau LLM Murni: ambil komponen teks
-        final_response_content = response
-        
-    if final_response_content:
-        st.session_state.messages.append({"role": "assistant", "content": final_response_content})
+    if isinstance(result if 'result' in locals() else response, tuple):
+        st.session_state.messages.append({"role": "assistant", "content": result[0]})
+    else:
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
 # Footer
 st.markdown("""
