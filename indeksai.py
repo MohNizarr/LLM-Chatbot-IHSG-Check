@@ -6,15 +6,19 @@ from datetime import datetime, timedelta
 # Provider (Integrasi dengan Gemini)
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# CORE COMPONENTS (Diperbarui ke langchain_core)
-# ChatPromptTemplate & MessagesPlaceholder sekarang ada di langchain_core.prompts
+# CORE COMPONENTS
+# ChatPromptTemplate & MessagesPlaceholder
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder 
-# HumanMessage, AIMessage, SystemMessage sekarang ada di langchain_core.messages
+# HumanMessage, AIMessage, SystemMessage
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
+# COMPONENTS KOMUNITAS (Diperbaiki ke langchain_community)
+# ConversationBufferWindowMemory (Ini adalah letak yang benar jika tidak di paket utama)
+from langchain_community.chat_models import ConversationBufferWindowMemory # <-- KOREKSI UTAMA UNTUK MEMORY
+
 # Components yang masih berada di package utama 'langchain'
-from langchain_core.memory import ConversationBufferWindowMemory
-from langchain.chains import LLMChain
+from langchain.chains import LLMChain 
+# Perhatikan: Karena memory sudah diimpor dari community, kita hapus impor lama dari langchain.memory
 
 # ========== KONFIGURASI ==========
 st.set_page_config(
@@ -530,7 +534,7 @@ if prompt := st.chat_input("Tanyakan tentang IHSG, investasi, atau pasar modal I
                     message_placeholder.markdown(response)
                     st.dataframe(df, use_container_width=True, hide_index=True)
                     
-                    # Ambil data lagi (untuk line_chart, meskipun sudah ada di 'result' untuk memastikan pemrosesan data)
+                    # Ambil data lagi (untuk line_chart, walaupun sudah ada di 'result' untuk memastikan pemrosesan data)
                     weekly_data = fetch_ihsg_weekly_data()
                     if weekly_data and not isinstance(weekly_data, dict):
                         # Filter data untuk memastikan semua memiliki kunci 'date' dan 'close'
