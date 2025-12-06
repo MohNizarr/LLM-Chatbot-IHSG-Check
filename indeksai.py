@@ -13,7 +13,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Components yang masih berada di package utama 'langchain'
-from langchain.memory import ConversationBufferWindowMemory
+from langchain_core.memory import ConversationBufferWindowMemory
 from langchain.chains import LLMChain
 
 # ========== KONFIGURASI ==========
